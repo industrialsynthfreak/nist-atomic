@@ -36,7 +36,7 @@ class Loader:
     """
 
     nist_db_URL = 'http://physics.nist.gov/cgi-bin/ASD/lines1.pl'
-    log_path = '../log/nist-atomic.log'
+    log_path = '../nist-atomic.log'
     config_path = '../nist-atomic.ini'
     _stored_data_path = '../stored/nist-atomic/'
     _config_parser = configparser.ConfigParser()
@@ -56,14 +56,13 @@ class Loader:
         return l
 
     @classmethod
-    def _load(cls):
+    def _load(cls, settings):
         """This private method sends request and returns response text and
         response status code. The code should be `200`.
         See `W3 status codes <https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html>`_
         for more info.
         """
-        data = dict(cls._config_parser['LOADER'])
-        response = requests.post(cls.nist_db_URL, data=data)
+        response = requests.post(cls.nist_db_URL, data=settings)
         tree = html.fromstring(response.content)
         data = tree.xpath('//pre/text()')[0].splitlines()
         data = [d.replace(" ", "").split("|") for d in data]
@@ -73,19 +72,13 @@ class Loader:
         return response.status_code, [data_header] + data_values
 
     @classmethod
-    def _save(cls, filename, data):
-        format_type = cls._config_parser['SAVER'].get('format', 'ascii')
-        file_format = cls._formats.get(format_type, cls._formats['ascii'])
-        ext, splitter = file_format['ext'], file_format['splitter']
-        path = cls._config_parser['SAVER'].get('path', cls._stored_data_path)
-        path = os.path.join(os.path.dirname(__file__), path)
-        filename = os.path.join(path, filename + ext)
+    def _save(cls, filename, data, splitter):
         with open(filename, 'w') as f:
             for d in data:
                 f.write(splitter.join(d) + '\n')
 
     @classmethod
-    def load(cls, values, ignore_bad_response=False):
+    def load(cls, values, ignore_bad_response=True):
         """This method loads data from url defined in
         :py:attribute:`nist_db_URL` attribute. Data will be stored in a folder
         specified in the config. See :py:attribute:`config_path`.
@@ -117,20 +110,33 @@ class Loader:
         :raises: ConnectionError if server returns a bad code (not 200)
         :raises: IOError or OSError if files cannot be written.
         """
-        error_count = 0
         logger = cls._setup_logger()
         logger.debug('Started!')
-        path = os.path.join(os.path.dirname(__file__), cls.config_path)
+        error_count = 0
+
         values = set(values)
+
+        path = os.path.join(os.path.dirname(__file__), cls.config_path)
+        cls._config_parser.read(path)
+        settings = dict(cls._config_parser['LOADER'])
+
+        format_type = cls._config_parser['SAVER'].get('format', 'ascii')
+        file_format = cls._formats.get(format_type, cls._formats['ascii'])
+        ext, splitter = file_format['ext'], file_format['splitter']
+        path = cls._config_parser['SAVER'].get('path', cls._stored_data_path)
+        path = os.path.join(os.path.dirname(__file__), path)
+        if not os.path.exists(path):
+            os.makedirs(path)
+
         for value in values:
             logger.debug('Sending db query: %s' % value)
-            cls._config_parser.read(path)
-            code, data = cls._load()
+            code, data = cls._load(settings)
             if code == 200:
-                cls._save(filename=value, data=data)
+                filename = os.path.join(path, value + ext)
+                cls._save(filename, data, splitter)
             else:
                 msg = 'Bad connection. Server returned code %d' % code
-                if ignore_bad_response:
+                if not ignore_bad_response:
                     raise ConnectionError(msg)
                 else:
                     error_count += 1
