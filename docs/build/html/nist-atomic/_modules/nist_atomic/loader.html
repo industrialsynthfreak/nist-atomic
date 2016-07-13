@@ -1,0 +1,221 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>nist_atomic.loader &mdash; nist-atomic 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="nist-atomic 1.0 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for nist_atomic.loader</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;This module provides a loader class for working with NIST atomic database</span>
+<span class="sd">query form. It depends on requests and lxml packages.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">configparser</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+
+<span class="kn">import</span> <span class="nn">requests</span>
+
+<span class="kn">from</span> <span class="nn">lxml</span> <span class="k">import</span> <span class="n">html</span>
+
+
+<div class="viewcode-block" id="Loader"><a class="viewcode-back" href="../../nist_atomic.html#nist_atomic.loader.Loader">[docs]</a><span class="k">class</span> <span class="nc">Loader</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;This class handles NIST atomic database form and loads a query results.</span>
+
+<span class="sd">    This class doesn&#39;t need to be instantiated.</span>
+
+<span class="sd">    .. py:attribute:: nist_db_URL</span>
+
+<span class="sd">       URL to the database query form.</span>
+
+<span class="sd">    .. py:attribute:: log_path</span>
+
+<span class="sd">       Path to the loader&#39;s log.</span>
+
+<span class="sd">    .. py:attribute:: config_path</span>
+
+<span class="sd">       Path to a config file. Most of additional the query customization is</span>
+<span class="sd">       there.</span>
+
+<span class="sd">    .. py:attribute:: formats</span>
+
+<span class="sd">       List of available storage file formats.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">nist_db_URL</span> <span class="o">=</span> <span class="s1">&#39;http://physics.nist.gov/cgi-bin/ASD/lines1.pl&#39;</span>
+    <span class="n">log_path</span> <span class="o">=</span> <span class="s1">&#39;../log/nist-atomic.log&#39;</span>
+    <span class="n">config_path</span> <span class="o">=</span> <span class="s1">&#39;../nist-atomic.ini&#39;</span>
+    <span class="n">_stored_data_path</span> <span class="o">=</span> <span class="s1">&#39;../stored/nist-atomic/&#39;</span>
+    <span class="n">_config_parser</span> <span class="o">=</span> <span class="n">configparser</span><span class="o">.</span><span class="n">ConfigParser</span><span class="p">()</span>
+    <span class="n">_formats</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;ascii&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;ext&#39;</span><span class="p">:</span> <span class="s1">&#39;.txt&#39;</span><span class="p">,</span> <span class="s1">&#39;splitter&#39;</span><span class="p">:</span> <span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">},</span>
+        <span class="s1">&#39;csv&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;ext&#39;</span><span class="p">:</span> <span class="s1">&#39;.csv&#39;</span><span class="p">,</span> <span class="s1">&#39;splitter&#39;</span><span class="p">:</span> <span class="s1">&#39;;&#39;</span><span class="p">}</span>
+    <span class="p">}</span>
+    <span class="n">formats</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">_formats</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_setup_logger</span><span class="p">(</span><span class="n">cls</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Private function for a logger setup.&quot;&quot;&quot;</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">__file__</span><span class="p">),</span> <span class="n">cls</span><span class="o">.</span><span class="n">log_path</span><span class="p">)</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="n">path</span><span class="p">)</span>
+        <span class="n">l</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">()</span>
+        <span class="n">l</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">l</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_load</span><span class="p">(</span><span class="n">cls</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;This private method sends request and returns response text and</span>
+<span class="sd">        response status code. The code should be `200`.</span>
+<span class="sd">        See `W3 status codes &lt;https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html&gt;`_</span>
+<span class="sd">        for more info.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">cls</span><span class="o">.</span><span class="n">_config_parser</span><span class="p">[</span><span class="s1">&#39;LOADER&#39;</span><span class="p">])</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="n">cls</span><span class="o">.</span><span class="n">nist_db_URL</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
+        <span class="n">tree</span> <span class="o">=</span> <span class="n">html</span><span class="o">.</span><span class="n">fromstring</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">tree</span><span class="o">.</span><span class="n">xpath</span><span class="p">(</span><span class="s1">&#39;//pre/text()&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;|&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">data</span><span class="p">]</span>
+        <span class="n">data_header</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">])</span> <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="mi">4</span><span class="p">])]</span>
+        <span class="n">data_values</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="mi">6</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span><span class="p">,</span> <span class="p">[</span><span class="n">data_header</span><span class="p">]</span> <span class="o">+</span> <span class="n">data_values</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_save</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="n">format_type</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">_config_parser</span><span class="p">[</span><span class="s1">&#39;SAVER&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;format&#39;</span><span class="p">,</span> <span class="s1">&#39;ascii&#39;</span><span class="p">)</span>
+        <span class="n">file_format</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">_formats</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">format_type</span><span class="p">,</span> <span class="n">cls</span><span class="o">.</span><span class="n">_formats</span><span class="p">[</span><span class="s1">&#39;ascii&#39;</span><span class="p">])</span>
+        <span class="n">ext</span><span class="p">,</span> <span class="n">splitter</span> <span class="o">=</span> <span class="n">file_format</span><span class="p">[</span><span class="s1">&#39;ext&#39;</span><span class="p">],</span> <span class="n">file_format</span><span class="p">[</span><span class="s1">&#39;splitter&#39;</span><span class="p">]</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">_config_parser</span><span class="p">[</span><span class="s1">&#39;SAVER&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;path&#39;</span><span class="p">,</span> <span class="n">cls</span><span class="o">.</span><span class="n">_stored_data_path</span><span class="p">)</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">__file__</span><span class="p">),</span> <span class="n">path</span><span class="p">)</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">filename</span> <span class="o">+</span> <span class="n">ext</span><span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">splitter</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="Loader.load"><a class="viewcode-back" href="../../nist_atomic.html#nist_atomic.loader.Loader.load">[docs]</a>    <span class="k">def</span> <span class="nf">load</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">values</span><span class="p">,</span> <span class="n">ignore_bad_response</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;This method loads data from url defined in</span>
+<span class="sd">        :py:attribute:`nist_db_URL` attribute. Data will be stored in a folder</span>
+<span class="sd">        specified in the config. See :py:attribute:`config_path`.</span>
+
+<span class="sd">        :param values: set of element names or a single element name</span>
+<span class="sd">        examples: &#39;H&#39;, [&#39;H&#39;, &#39;F&#39;, &#39;Mn&#39;]</span>
+
+<span class="sd">        .. note:: In each name different combinations are allowed:</span>
+<span class="sd">                    - Ar I</span>
+<span class="sd">                    - Mg I-IV</span>
+<span class="sd">                    - All spectra</span>
+<span class="sd">                    - Fe I; Si IX,XI; Ni Co-like</span>
+<span class="sd">                    - H-Ar I-II</span>
+<span class="sd">                    - Mg Li-like; Al Li-like-Be-like</span>
+<span class="sd">                    - Sc-Fe K-like-Ca-like</span>
+<span class="sd">                    - 198Hg I</span>
+
+<span class="sd">                  However, you may want to use one element per `load()` all</span>
+<span class="sd">                  because then the element data will be separated file-by-file.</span>
+
+<span class="sd">        :type values: list, tuple, set, str</span>
+<span class="sd">        :param ignore_bad_response: if True, then no exception on connection</span>
+<span class="sd">        error will be generated, the loader function just write a debug info.</span>
+<span class="sd">        :type ignore_bad_response: bool</span>
+
+<span class="sd">        :return:</span>
+<span class="sd">        :rtype:</span>
+
+<span class="sd">        :raises: ConnectionError if server returns a bad code (not 200)</span>
+<span class="sd">        :raises: IOError or OSError if files cannot be written.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">logger</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">_setup_logger</span><span class="p">()</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">__file__</span><span class="p">),</span> <span class="n">cls</span><span class="o">.</span><span class="n">config_path</span><span class="p">)</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Sending db query: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">value</span><span class="p">)</span>
+            <span class="n">cls</span><span class="o">.</span><span class="n">_config_parser</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+            <span class="n">code</span><span class="p">,</span> <span class="n">data</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">_load</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">code</span> <span class="o">==</span> <span class="mi">200</span><span class="p">:</span>
+                <span class="n">cls</span><span class="o">.</span><span class="n">_save</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="n">value</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="s1">&#39;Bad connection. Server returned code </span><span class="si">%d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">code</span>
+                <span class="k">if</span> <span class="n">ignore_bad_response</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ConnectionError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;All data loaded&#39;</span><span class="p">)</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Violet Red.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.8</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

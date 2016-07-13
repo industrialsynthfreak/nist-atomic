@@ -1,0 +1,285 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>nist_atomic package &mdash; nist-atomic 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="nist-atomic 1.0 documentation" href="index.html" />
+    <link rel="next" title="nist_atomic" href="modules.html" />
+    <link rel="prev" title="Welcome to nist-atomic’s documentation!" href="index.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="nist-atomic-package">
+<h1>nist_atomic package<a class="headerlink" href="#nist-atomic-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="module-nist_atomic">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-nist_atomic" title="Permalink to this headline">¶</a></h2>
+<p>This package provides console integration with spectral lines data of the
+<em>NIST Atomic Spectra Database</em>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Authors:</th><td class="field-body">Violet Red</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Version:</th><td class="field-body">1.0 2016/07/13</td>
+</tr>
+</tbody>
+</table>
+<p>See full documentation at <em>docs/build/html/nist-atomic</em> folder or build it
+yourself with Sphinx.</p>
+<p><strong>Example:</strong></p>
+<blockquote>
+<div><p>To load data from the server:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">nist_atomic.loader</span> <span class="k">import</span> <span class="n">Loader</span>
+<span class="n">Loader</span><span class="o">.</span><span class="n">load</span><span class="p">({</span><span class="s1">&#39;H&#39;</span><span class="p">,</span> <span class="s1">&#39;he ii&#39;</span><span class="p">,</span> <span class="s1">&#39;Mn&#39;</span><span class="p">})</span>
+</pre></div>
+</div>
+<p>Data will be stored in a path specified in the .ini file (default is:
+<a href="#id1"><span class="problematic" id="id2">*</span></a>..stored</p>
+</div></blockquote>
+<dl class="docutils">
+<dt>ist_atomic* relative to this module). See <cite>/examples/</cite> folder</dt>
+<dd>for more examples.</dd>
+</dl>
+<p><strong>Info:</strong></p>
+<blockquote>
+<div>Atomic light emission and absorption spectra consist of many line series
+related to electron transitions from one state to another. They may be
+calculated directly, but the NIST database provides comprehensive set of
+data about wavelengths, relative intensities and other parameters for each
+element.</div></blockquote>
+<p><strong>Requirements:</strong></p>
+<blockquote>
+<div><p>Python3 tested only.
+All requirements are listed in <em>requirements.txt</em> file.</p>
+<ul class="simple">
+<li><a href="#id7"><span class="problematic" id="id8">requests_</span></a> <a class="reference external" href="http://docs.python-requests.org/en/latest/index.html">http://docs.python-requests.org/en/latest/index.html</a></li>
+<li><a href="#id9"><span class="problematic" id="id10">lxml_</span></a> <a class="reference external" href="http://lxml.de">http://lxml.de</a></li>
+</ul>
+<p>Install them with <cite>pip install -r requirements.txt</cite> command.</p>
+</div></blockquote>
+<p><strong>Links:</strong></p>
+<blockquote>
+<div><ul class="simple">
+<li>The database <a href="#id11"><span class="problematic" id="id12">itself_</span></a> <a class="reference external" href="http://physics.nist.gov/PhysRefData/ASD/">http://physics.nist.gov/PhysRefData/ASD/</a></li>
+<li>More info about atomic <a href="#id13"><span class="problematic" id="id14">spectra_</span></a>: <a class="reference external" href="http://physics.nist.gov/Pubs/AtSpec/node17.html">http://physics.nist.gov/Pubs/AtSpec/node17.html</a></li>
+</ul>
+</div></blockquote>
+</div>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-nist_atomic.loader">
+<span id="nist-atomic-loader-module"></span><h2>nist_atomic.loader module<a class="headerlink" href="#module-nist_atomic.loader" title="Permalink to this headline">¶</a></h2>
+<p>This module provides a loader class for working with NIST atomic database
+query form. It depends on requests and lxml packages.</p>
+<dl class="class">
+<dt id="nist_atomic.loader.Loader">
+<em class="property">class </em><code class="descclassname">nist_atomic.loader.</code><code class="descname">Loader</code><a class="reference internal" href="_modules/nist_atomic/loader.html#Loader"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#nist_atomic.loader.Loader" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/2/library/functions.html#object" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">object</span></code></a></p>
+<p>This class handles NIST atomic database form and loads a query results.</p>
+<p>This class doesn&#8217;t need to be instantiated.</p>
+<dl class="attribute">
+<dt id="nist_atomic.loader.Loader.nist_db_URL">
+<code class="descname">nist_db_URL</code><a class="headerlink" href="#nist_atomic.loader.Loader.nist_db_URL" title="Permalink to this definition">¶</a></dt>
+<dd><p>URL to the database query form.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="nist_atomic.loader.Loader.log_path">
+<code class="descname">log_path</code><a class="headerlink" href="#nist_atomic.loader.Loader.log_path" title="Permalink to this definition">¶</a></dt>
+<dd><p>Path to the loader&#8217;s log.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="nist_atomic.loader.Loader.config_path">
+<code class="descname">config_path</code><a class="headerlink" href="#nist_atomic.loader.Loader.config_path" title="Permalink to this definition">¶</a></dt>
+<dd><p>Path to a config file. Most of additional the query customization is
+there.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="nist_atomic.loader.Loader.formats">
+<code class="descname">formats</code><a class="headerlink" href="#nist_atomic.loader.Loader.formats" title="Permalink to this definition">¶</a></dt>
+<dd><p>List of available storage file formats.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt>
+<code class="descname">config_path</code><em class="property"> = '../nist-atomic.ini'</em></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt>
+<code class="descname">formats</code><em class="property"> = ('ascii', 'csv')</em></dt>
+<dd></dd></dl>
+
+<dl class="classmethod">
+<dt id="nist_atomic.loader.Loader.load">
+<em class="property">classmethod </em><code class="descname">load</code><span class="sig-paren">(</span><em>values</em>, <em>ignore_bad_response=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/nist_atomic/loader.html#Loader.load"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#nist_atomic.loader.Loader.load" title="Permalink to this definition">¶</a></dt>
+<dd><p>This method loads data from url defined in
+<a href="#id3"><span class="problematic" id="id4">:py:attribute:`nist_db_URL`</span></a> attribute. Data will be stored in a folder
+specified in the config. See <a href="#id5"><span class="problematic" id="id6">:py:attribute:`config_path`</span></a>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>values</strong> &#8211; set of element names or a single element name</td>
+</tr>
+</tbody>
+</table>
+<p>examples: &#8216;H&#8217;, [&#8216;H&#8217;, &#8216;F&#8217;, &#8216;Mn&#8217;]</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<dl class="docutils">
+<dt>In each name different combinations are allowed:</dt>
+<dd><ul class="first last simple">
+<li>Ar I</li>
+<li>Mg I-IV</li>
+<li>All spectra</li>
+<li>Fe I; Si IX,XI; Ni Co-like</li>
+<li>H-Ar I-II</li>
+<li>Mg Li-like; Al Li-like-Be-like</li>
+<li>Sc-Fe K-like-Ca-like</li>
+<li>198Hg I</li>
+</ul>
+</dd>
+</dl>
+<p class="last">However, you may want to use one element per <cite>load()</cite> all
+because then the element data will be separated file-by-file.</p>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>ignore_bad_response</strong> &#8211; if True, then no exception on connection</td>
+</tr>
+</tbody>
+</table>
+<p>error will be generated, the loader function just write a debug info.
+:type ignore_bad_response: bool</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"></td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"></td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body">ConnectionError if server returns a bad code (not 200)</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body">IOError or OSError if files cannot be written.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt>
+<code class="descname">log_path</code><em class="property"> = '../log/nist-atomic.log'</em></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt>
+<code class="descname">nist_db_URL</code><em class="property"> = 'http://physics.nist.gov/cgi-bin/ASD/lines1.pl'</em></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">nist_atomic package</a><ul>
+<li><a class="reference internal" href="#module-nist_atomic">Module contents</a></li>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-nist_atomic.loader">nist_atomic.loader module</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">Welcome to nist-atomic&#8217;s documentation!</a></li>
+      <li>Next: <a href="modules.html" title="next chapter">nist_atomic</a></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/nist_atomic.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Violet Red.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.8</a>
+      
+      |
+      <a href="_sources/nist_atomic.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
